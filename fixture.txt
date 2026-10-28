@@ -1,1 +1,2 @@
 Initial sandbox baseline.
+Feature included in the next release.
