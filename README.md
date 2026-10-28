@@ -5,7 +5,10 @@ at commit `b4800626e5` in Cronometer Flutter. It contains no app source, app his
 signing keys, or production distribution credentials.
 
 The four Dart scripts, two Ruby helpers, and Release Drafter configuration are
-copied unchanged. Sandbox workflow changes: schedules removed; standalone Dart
+copied from the source. One sandbox fix explicitly preserves `tag_name` when
+patching draft notes: live GitHub testing showed that a body-only PATCH changes
+an uncreated version tag into `untagged-…`, breaking subsequent lookups.
+Sandbox workflow changes: schedules removed; standalone Dart
 setup; `CODE_WRITE_TOKEN` falls back to the repository `GITHUB_TOKEN`; PR write
 permission enabled. Manual build only records requested inputs in a JSON artifact.
 

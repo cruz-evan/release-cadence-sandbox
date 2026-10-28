@@ -217,7 +217,7 @@ String notesForRelease(
       throw StateError('Release Drafter did not update the expected draft');
     }
     final payload = File('${scratch.path}/notes.json')
-      ..writeAsStringSync(jsonEncode({'body': body}));
+      ..writeAsStringSync(jsonEncode({'body': body, 'tag_name': version}));
     gh([
       'api',
       '--method',
