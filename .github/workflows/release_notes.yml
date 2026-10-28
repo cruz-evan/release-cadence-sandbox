@@ -1,0 +1,40 @@
+name: Update release branch notes
+
+on:
+  push:
+    branches: ['release/*']
+
+concurrency:
+  group: release-train-control
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update_notes:
+    if: ${{ github.event.deleted == false }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release automation
+        uses: actions/checkout@v6
+        with:
+          ref: master
+          token: ${{ secrets.CODE_WRITE_TOKEN || github.token }}
+
+      - name: Setup Node for Release Drafter
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Setup Dart for sandbox scripts
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Update this branch's draft unless it is tagged
+        env:
+          GH_TOKEN: ${{ secrets.CODE_WRITE_TOKEN || github.token }}
+          RELEASE_BRANCH: ${{ github.ref_name }}
+        run: dart build_scripts/refresh_release_notes.dart "$RELEASE_BRANCH"

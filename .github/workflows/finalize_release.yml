@@ -1,0 +1,39 @@
+name: Publish approved GitHub release
+run-name: Finalize ${{ github.event.pull_request.head.ref }} from PR ${{ github.event.pull_request.number }}
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-train-control
+  cancel-in-progress: false
+
+jobs:
+  publish_release:
+    if: ${{ github.event.pull_request.merged == true
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && startsWith(github.event.pull_request.head.ref, 'release/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout merged workflow code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          persist-credentials: false
+
+      - name: Setup Dart for sandbox scripts
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Verify approved release tag and publish its notes
+        env:
+          GH_TOKEN: ${{ secrets.CODE_WRITE_TOKEN || github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: dart build_scripts/finalize_release.dart "$PR_NUMBER"

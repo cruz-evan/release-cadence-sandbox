@@ -1,0 +1,64 @@
+name: Release train
+run-name: Release train ${{ inputs.action || (github.event.schedule == '0 23 * * 0' && 'cut' || 'beta') }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Cut/build, rebuild, refresh beta, or tag the approved release and open its Friday PR'
+        required: true
+        type: choice
+        options: [cut, start, beta, finish]
+      train_date:
+        description: 'Sunday date (YYYY-MM-DD); blank uses the current train'
+        required: false
+        type: string
+      approved_commit:
+        description: 'For finish: full 40-character release commit SHA approved by QA'
+        required: false
+        type: string
+
+concurrency:
+  group: release-train-control
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  release_train:
+    if: ${{ github.ref == 'refs/heads/master' }}
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.CODE_WRITE_TOKEN || github.token }}
+      TRAIN_ACTION: ${{ inputs.action || (github.event.schedule == '0 23 * * 0' && 'cut' || 'beta') }}
+      TRAIN_DATE: ${{ inputs.train_date }}
+      APPROVED_COMMIT: ${{ inputs.approved_commit }}
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.CODE_WRITE_TOKEN || github.token }}
+          ref: master
+
+      - name: Setup Node for Release Drafter
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Setup Dart for sandbox scripts
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Run release train
+        env:
+          RELEASE_NAME: ${{ vars.RELEASE_NAME }}
+        run: |
+          if [ "$TRAIN_ACTION" = finish ]; then
+            dart build_scripts/release_train.dart finish "$TRAIN_DATE" "$APPROVED_COMMIT"
+          else
+            dart build_scripts/release_train.dart "$TRAIN_ACTION" "$TRAIN_DATE"
+          fi

@@ -1,0 +1,30 @@
+name-template: 'New Release'
+prerelease: true
+prerelease-identifier: 'preview'
+exclude-labels:
+  - release-backfill
+exclude-contributors:
+  - GithubServiceCronometer
+change-template: "- :twisted_rightwards_arrows: $TITLE @$AUTHOR (#$NUMBER)"
+categories:
+  - title: '🚀 Features'
+    labels:
+      - 'feature'
+      - 'feature :medal_sports:'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'bug fix :lady_beetle:'
+      - 'bugfix'
+      - 'bug'
+  - title: 'Uncategorized :confused:'
+  - title: 'Code improvements :soap:'
+    labels:
+      - 'code cleanup :broom:'
+      - 'enhancement'
+      - 'dev chore'
+  - title: 'Translations :robot:'
+    labels:
+      - 'auto-translation'
+template: |
+  ## What's New
+   $CHANGES  

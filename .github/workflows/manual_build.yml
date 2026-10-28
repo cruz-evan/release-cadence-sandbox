@@ -1,0 +1,44 @@
+name: Manual build (simulated)
+run-name: Simulated ${{ inputs.distribution_channel }} build on ${{ github.ref_name }}
+on:
+  workflow_dispatch:
+    inputs:
+      distribution_channel:
+        type: choice
+        options: [firebase, release_candidate, prod]
+        required: true
+      platform:
+        type: string
+        default: all
+      skip_tests:
+        type: string
+        default: 'false'
+      run_patrol:
+        type: string
+        default: 'false'
+      use_shorebird:
+        type: string
+        default: 'false'
+permissions:
+  contents: read
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Record simulated build
+        env:
+          BUILD_INPUTS: ${{ toJSON(inputs) }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os, pathlib, subprocess
+          version = json.loads(pathlib.Path('VERSION.json').read_text())
+          receipt = dict(repository=os.environ['GITHUB_REPOSITORY'], ref=os.environ['GITHUB_REF'], commit=subprocess.check_output(['git','rev-parse','HEAD'], text=True).strip(), version=version['version'], inputs=json.loads(os.environ['BUILD_INPUTS']), simulated=True)
+          pathlib.Path('build-request.json').write_text(json.dumps(receipt, indent=2))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as output:
+              output.write('## Simulated build request\n```json\n' + json.dumps(receipt, indent=2) + '\n```\n')
+          PYTHON
+      - uses: actions/upload-artifact@v4
+        with:
+          name: simulated-build-${{ inputs.distribution_channel }}
+          path: build-request.json
